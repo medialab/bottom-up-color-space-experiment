@@ -11,13 +11,32 @@
 	  <div class="container">
   	  <div class="columns">
         <div class="column col-3">
-			    <h2>This is an experiment on color</h2>
+			    <h2>This is an experiment about color vision</h2>
 			    <p class="lead">Rules are simple. You will see a series of images made of different items. One of these elements has a different color and you have to find if it is on top, bottom, left or right. Just hit the corresponding key, or the spacebar if you don't know. There is a twist though: the color difference augments with time in each image.</p>
 			    <p><strong>#why</strong> At first each image will look homogeneous, and the different element will appear more an more clearly. Our goal is to measure at which point you are able to <em>see</em> the color difference in different situations. This allows us to build different color-spaces for different situation to improve various data visualizations.</p>
 			    <p><strong>#privacy</strong> We don't care who you are and we don't store personal data. However we need to gather the results by participant. We could ask your name but it is ambiguous and we don't trust you to give us the same answer everytime. That is why we ask your email, but we don't store it: we just keep a hash. We could not even email you if we wanted to. The source code is open anyway, you can check how it works if you want.</p>
-			    <p><strong>#colorblind</strong> Participate if you are color blind. We are even more interested in you. You don't have to tell us that you are, we can measure your color blindness from your answers.</p>
+			    <p><strong>#colorblind</strong> Participate if you are color blind. We are even more interested in you. You don't have to tell us anything about your color blindness, we can measure it from your answers.</p>
         </div>
-        <div class="column col-9"></div>
+        <div class="column col-9">
+	        <div style="max-width: 400px; padding: 128px 0px 0px 64px;">
+	        	<div id="startup-form">
+	        		<h3>Set your profile and start</h3>
+					    <div class="form-group">
+				        <label class="form-label" for="input-email">Your email (not stored, it's to gather your results)</label>
+				        <input class="form-input" type="text" id="input-email" placeholder="Email" value="jacomyma"/>
+					    </div>
+			        <div class="inline">
+			        	<span>
+			        		<button class="btn btn-primary">Start experiment</button>&nbsp;
+			        	</span>
+			        	<label class="form-switch">
+			            <input type="checkbox" checked />
+			            <i class="form-icon"></i> Tutorial
+				        </label>
+			        </div>
+	        	</div>
+        	</div>
+        </div>
       </div>
     </div>
   </body>

@@ -5,10 +5,10 @@ var experiment = {}
 	ns.settings = {
 		width: 600,
 		height: 600,
-		dotRadius: 30,
+		dotRadius: 60,
 		dotMargin: 6,
 		standardChanOffset: 20,
-		screenDuration: 5000
+		screenDuration: 10000
 	}
 	
 	ns.init = function() {
@@ -114,7 +114,6 @@ var experiment = {}
 
 	ns.newExperimentScreen = function(context) {
 		var setup = ns.setups.pop()
-		console.log(setup.chan)
 		ns.drawFrame(context)
 		var shapes = ns.generateShapes()	// shape 0 is always the special one
 		shapes.forEach(function(s,i) {

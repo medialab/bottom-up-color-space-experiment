@@ -44,7 +44,7 @@ var experiment = {}
 				s.draw(context, '#666666')
 			}
 		})
-
+		ns.drawMessage(context, 'One dot has a\ndifferent color.\nPress the arrow key\ncorresponding to\nits position ('+shapes[0].position+')')
 
 		// TODO
 	}
@@ -62,12 +62,40 @@ var experiment = {}
 		}
 	}
 
+	// Drawing functions
 	ns.drawFrame = function(context) {
 		context.beginPath()
     context.rect(0, 0, ns.settings.width, ns.settings.height)
     context.stroke()
 	}
 
+	ns.drawMessage = function(context, text) {
+		var lines = text.split('\n')
+		var lineHeight = 38
+		var lineCount = lines.length
+		lines.forEach(function(line, i){
+			var x = ns.settings.width / 2
+			var y = ns.settings.height / 2 + lineHeight * ( i - (lineCount - 1) / 2 )
+			context.font="36px Segoe UI,Roboto,Ubuntu,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Hiragino Kaku Gothic Pro,Meiryo,Malgun Gothic,Helvetica Neue,sans-serif"
+			context.textAlign = "center"
+			context.textBaseline = "middle"
+			context.strokeStyle = '#FFFFFF'
+			context.lineWidth = '30'
+			context.lineCap = "round"
+			context.lineJoin = "round"
+			context.fillStyle = "#FFFFFF"
+			context.strokeText(line, x, y)
+			context.fillText(line, x, y)
+		})
+		lines.forEach(function(line, i){
+			var x = ns.settings.width / 2
+			var y = ns.settings.height / 2 + lineHeight * ( i - (lineCount - 1) / 2 )
+			context.fillStyle = "#666666"
+			context.fillText(line, x, y)
+		})
+	}
+
+	// Shape functions
 	ns.generateShapes = function() {
 		var shapes = []
 
@@ -128,6 +156,7 @@ var experiment = {}
 		return shapes
 	}
 
+	// Helpers
 	ns.randRange = function(from, to, integerOnly) {
 		var r = from + Math.random() * (to-from)
 		if (integerOnly) return Math.floor(r)

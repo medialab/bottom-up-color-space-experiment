@@ -105,6 +105,7 @@ var experiment = {}
 				break
 		}
 		if (keySignature !== 'irrelevant') {
+			window.clearInterval(ns.colorInterval)
 			ns.keyAction(keySignature)
 		}
 	}
@@ -118,8 +119,9 @@ var experiment = {}
 	ns.slideId = 0
 	ns.buildTutoSlides = function() {
 		ns.tutoSlides = []
+		ns.onAction(ns.nextTutoSlide)
 
-		// Slide 1
+		// Slide 1: keys
 		ns.tutoSlides.push({
 			run: function(context) {
 				ns.drawFrame(context)
@@ -132,11 +134,10 @@ var experiment = {}
 					}
 				})
 				ns.drawMessage(context, 'One dot has a\ndifferent color.\nPress the arrow key\ncorresponding to\nits position ('+shapes[0].position+')')
-				ns.onAction(ns.nextTutoSlide)
 			}
 		})
 
-		// Slide 2
+		// Slide 2: alt keys
 		ns.tutoSlides.push({
 			run: function(context) {
 				ns.drawFrame(context)
@@ -154,24 +155,39 @@ var experiment = {}
 				if ( shapes[0].position == 'left' ) { numberKey = '4' } 
 				if ( shapes[0].position == 'right' ) { numberKey = '6' } 
 				ns.drawMessage(context, 'You can also\nuse the number key\ninstead of the arrow keys:\n press '+numberKey+'')
-				ns.onAction(ns.nextTutoSlide)
 			}
 		})
 
-		// Slide 3
+		// Slide 3: spacebar
+		ns.tutoSlides.push({
+			run: function(context) {
+				ns.drawFrame(context)
+				var shapes = ns.generateShapes()
+				shapes.forEach(function(s,i) {
+					s.draw(context, '#999999')
+				})
+				ns.drawMessage(context, 'If you don\'t\nknow where the\nthe special dot is,\njust hit the spacebar')
+			}
+		})
+
+		// Slide 4: time
 		ns.tutoSlides.push({
 			run: function(context) {
 				ns.drawFrame(context)
 				var shapes = ns.generateShapes()	// shape 0 is always the special one
 				shapes.forEach(function(s,i) {
-					if (i == 0) {
-						s.draw(context, '#999999')
-					} else {
-						s.draw(context, '#999999')
-					}
+					s.draw(context, '#999999')
 				})
-				ns.drawMessage(context, 'If you don\'t\nknow where the\nthe special dot is,\njust hit the spacebar')
-				ns.onAction(ns.nextTutoSlide)
+				ns.setColorTimer(shapes[0], '#999999', '#FF0000', 5000)
+				ns.drawMessage(context, 'TWIST:\nthe color difference\nappears progressively.\nHit as soon\nas you can!')
+			}
+		})
+
+		// Slide 5: go!
+		ns.tutoSlides.push({
+			run: function(context) {
+				ns.drawFrame(context)
+				ns.drawMessage(context, 'You got it!\nHit the spacebar\nwhen you are ready\nto start.')
 			}
 		})
 
@@ -183,6 +199,28 @@ var experiment = {}
 		} else {
 			ns.tutoSlides[ns.slideId].run(ns.context)
 		}
+	}
+
+	// Color timer
+	ns.colorInterval
+	ns.timestamp
+	ns.setColorTimer = function(shape, sourceColor, targetColor, duration) {
+		ns.timestamp = Date.now()
+		var slab = d3.lab(sourceColor)
+		var tlab = d3.lab(targetColor)
+		var lscale = d3.scaleLinear()
+			.domain([0, duration])
+			.range([slab.l, tlab.l])
+		var ascale = d3.scaleLinear()
+			.domain([0, duration])
+			.range([slab.a, tlab.a])
+		var bscale = d3.scaleLinear()
+			.domain([0, duration])
+			.range([slab.b, tlab.b])
+	 	ns.colorInterval = setInterval(function(){
+	 		var msPassed = Date.now() - ns.timestamp
+			shape.draw(ns.context, d3.lab(lscale(msPassed), ascale(msPassed), bscale(msPassed)).toString())
+		}, 40)
 	}
 
 	// Drawing functions

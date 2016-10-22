@@ -11,6 +11,15 @@ var experiment = {}
 	
 	ns.init = function() {
 		document.querySelector('#canvas-container').style.display = 'none'
+	  document.onkeydown = function(e){
+	  	var keynum
+	    if(window.event) { // IE                    
+	      keynum = e.keyCode
+	    } else if(e.which){ // Netscape/Firefox/Opera                   
+	      keynum = e.which
+	    }
+	  	ns.keypressed(keynum)
+	  }
 	}
 
 	ns.start = function() {
@@ -33,20 +42,11 @@ var experiment = {}
 		  .attr("width", ns.settings.width)
 		  .attr("height", ns.settings.height);
 
-		var context = chart.node().getContext("2d");
+		ns.context = chart.node().getContext("2d");
 
-		ns.drawFrame(context)
-		var shapes = ns.generateShapes()	// shape 0 is always the special one
-		shapes.forEach(function(s,i) {
-			if (i == 0) {
-				s.draw(context, '#FF0000')
-			} else {
-				s.draw(context, '#666666')
-			}
-		})
-		ns.drawMessage(context, 'One dot has a\ndifferent color.\nPress the arrow key\ncorresponding to\nits position ('+shapes[0].position+')')
+		ns.buildTutoSlides()
+		ns.tutoSlides[0].run(ns.context)
 
-		// TODO
 	}
 
 	ns.startExperiment = function() {
@@ -62,11 +62,140 @@ var experiment = {}
 		}
 	}
 
+	// Key press functions
+	ns.keypressed = function(keynum) {
+		// console.log(keynum)
+		var keySignature
+		switch (keynum) {
+			case 38: // arrow up
+				keySignature = 'up'
+				break
+			case 40: // arrow down
+				keySignature = 'down'
+				break
+			case 37: // arrow left
+				keySignature = 'left'
+				break
+			case 39: // arrow right
+				keySignature = 'right'
+				break
+			case 32: // spacebar
+				keySignature = 'escape'
+				break
+			case 27: // escape key
+				keySignature = 'escape'
+				break
+			case 104: // keypad number 8
+				keySignature = 'up'
+				break
+			case 98: // keypad number 2
+				keySignature = 'down'
+				break
+			case 101: // keypad number 5
+				keySignature = 'down'
+				break
+			case 100: // keypad number 4
+				keySignature = 'left'
+				break
+			case 102: // keypad number 6
+				keySignature = 'right'
+				break
+			default:
+				keySignature = 'irrelevant'
+				break
+		}
+		if (keySignature !== 'irrelevant') {
+			ns.keyAction(keySignature)
+		}
+	}
+
+	ns.onAction = function(callback) {
+		ns.keyAction = callback
+	}
+
+	// Tutorial
+	ns.tutoSlides = []
+	ns.slideId = 0
+	ns.buildTutoSlides = function() {
+		ns.tutoSlides = []
+
+		// Slide 1
+		ns.tutoSlides.push({
+			run: function(context) {
+				ns.drawFrame(context)
+				var shapes = ns.generateShapes()	// shape 0 is always the special one
+				shapes.forEach(function(s,i) {
+					if (i == 0) {
+						s.draw(context, '#FF0000')
+					} else {
+						s.draw(context, '#999999')
+					}
+				})
+				ns.drawMessage(context, 'One dot has a\ndifferent color.\nPress the arrow key\ncorresponding to\nits position ('+shapes[0].position+')')
+				ns.onAction(ns.nextTutoSlide)
+			}
+		})
+
+		// Slide 2
+		ns.tutoSlides.push({
+			run: function(context) {
+				ns.drawFrame(context)
+				var shapes = ns.generateShapes()	// shape 0 is always the special one
+				shapes.forEach(function(s,i) {
+					if (i == 0) {
+						s.draw(context, '#FF0000')
+					} else {
+						s.draw(context, '#999999')
+					}
+				})
+				var numberKey
+				if ( shapes[0].position == 'up' ) { numberKey = '8' } 
+				if ( shapes[0].position == 'down' ) { numberKey = '2 (or 5)' } 
+				if ( shapes[0].position == 'left' ) { numberKey = '4' } 
+				if ( shapes[0].position == 'right' ) { numberKey = '6' } 
+				ns.drawMessage(context, 'You can also\nuse the number key\ninstead of the arrow keys:\n press '+numberKey+'')
+				ns.onAction(ns.nextTutoSlide)
+			}
+		})
+
+		// Slide 3
+		ns.tutoSlides.push({
+			run: function(context) {
+				ns.drawFrame(context)
+				var shapes = ns.generateShapes()	// shape 0 is always the special one
+				shapes.forEach(function(s,i) {
+					if (i == 0) {
+						s.draw(context, '#999999')
+					} else {
+						s.draw(context, '#999999')
+					}
+				})
+				ns.drawMessage(context, 'If you don\'t\nknow where the\nthe special dot is,\njust hit the spacebar')
+				ns.onAction(ns.nextTutoSlide)
+			}
+		})
+
+	}
+	ns.nextTutoSlide = function() {
+		ns.slideId++
+		if (ns.slideId >= ns.tutoSlides.length) {
+			// TODO: experiment
+		} else {
+			ns.tutoSlides[ns.slideId].run(ns.context)
+		}
+	}
+
 	// Drawing functions
 	ns.drawFrame = function(context) {
 		context.beginPath()
     context.rect(0, 0, ns.settings.width, ns.settings.height)
+    context.strokeStyle = '#000000'
+		context.lineWidth = '1'
+		context.lineCap = "round"
+		context.lineJoin = "round"
+		context.fillStyle = "#FFFFFF"
     context.stroke()
+    context.fill()
 	}
 
 	ns.drawMessage = function(context, text) {
@@ -113,12 +242,12 @@ var experiment = {}
 		}
 		var x = ns.settings.width / 2 - r * Math.cos(angle)
 		var y = ns.settings.dotRadius + r * Math.sin(angle)
-		var p = 'top'
+		var p = 'up'
 		var flip = Math.random() < 0.5
 		var turn = Math.random() < 0.5
 		if (flip) {
 			y = ns.settings.height - y
-			p = 'bottom'
+			p = 'down'
 		}
 		if (turn) {
 			var temp = x

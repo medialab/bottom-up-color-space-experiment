@@ -5,8 +5,8 @@ var experiment = {}
 	ns.settings = {
 		width: 600,
 		height: 600,
-		dotRadius: 60,
-		dotMargin: 6,
+		dotRadius: 50,
+		dotMargin: 4,
 		standardChanOffset: 20,
 		screenDuration: 10000
 	}
@@ -299,13 +299,16 @@ var experiment = {}
 		// DOTS
 		// Let's create the first dot somewhere clearly on top
 		var angle = ns.randRange(0, Math.PI)
-		var r = Math.pow(ns.randRange(0, Math.pow(ns.settings.width / 4 - ns.settings.dotRadius, 1/2)), 2)
+		var r = Math.pow(ns.randRange(0, Math.pow(ns.settings.width / 6 - ns.settings.dotRadius, 1/2)), 2)
 		var drawDot = function(x, y) {
 			return function(context, color) {
 				context.beginPath()
 				context.fillStyle = color
 		    context.arc(x, y, ns.settings.dotRadius, 0, 2*Math.PI)
 		    context.fill()
+		    context.lineWidth = 2
+		    context.strokeStyle = '#FFFFFF'
+		    context.stroke()
 			}
 		}
 		var x = ns.settings.width / 2 - r * Math.cos(angle)

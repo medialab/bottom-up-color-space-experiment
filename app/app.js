@@ -5,17 +5,19 @@ var experiment = {}
 	ns.settings = {
 		width: 600,
 		height: 600,
-		dotRadius: 12,
-		dotMargin: 6
+		dotRadius: 30,
+		dotMargin: 6,
+		standardChanOffset: 20,
+		screenDuration: 5000
 	}
 	
 	ns.init = function() {
 		document.querySelector('#canvas-container').style.display = 'none'
 	  document.onkeydown = function(e){
 	  	var keynum
-	    if(window.event) { // IE                    
+	    if(window.event) { // IE
 	      keynum = e.keyCode
-	    } else if(e.which){ // Netscape/Firefox/Opera                   
+	    } else if(e.which){ // Netscape/Firefox/Opera
 	      keynum = e.which
 	    }
 	  	ns.keypressed(keynum)
@@ -52,8 +54,19 @@ var experiment = {}
 	ns.startExperiment = function() {
 		ns.switchToCanvas()
 		document.querySelector('#canvas-container').innerHTML = ''
-		// TODO
+
+		var base = d3.select("#canvas-container")
+
+		var chart = base.append("canvas")
+		  .attr("width", ns.settings.width)
+		  .attr("height", ns.settings.height);
+
+		ns.context = chart.node().getContext("2d");
+
+		ns.initExperiment()
+		ns.newExperimentScreen(ns.context)
 	}
+
 
 	ns.switchToCanvas = function() {
 		if (document.querySelector('#canvas-container').style.display == 'none') {
@@ -62,56 +75,69 @@ var experiment = {}
 		}
 	}
 
-	// Key press functions
-	ns.keypressed = function(keynum) {
-		// console.log(keynum)
-		var keySignature
-		switch (keynum) {
-			case 38: // arrow up
-				keySignature = 'up'
-				break
-			case 40: // arrow down
-				keySignature = 'down'
-				break
-			case 37: // arrow left
-				keySignature = 'left'
-				break
-			case 39: // arrow right
-				keySignature = 'right'
-				break
-			case 32: // spacebar
-				keySignature = 'escape'
-				break
-			case 27: // escape key
-				keySignature = 'escape'
-				break
-			case 104: // keypad number 8
-				keySignature = 'up'
-				break
-			case 98: // keypad number 2
-				keySignature = 'down'
-				break
-			case 101: // keypad number 5
-				keySignature = 'down'
-				break
-			case 100: // keypad number 4
-				keySignature = 'left'
-				break
-			case 102: // keypad number 6
-				keySignature = 'right'
-				break
-			default:
-				keySignature = 'irrelevant'
-				break
+	// Experiment design
+	ns.setups = []
+	ns.initExperiment = function() {
+		// 1) Calibration
+		var numberOfScreens = 10 * 60 / 2	// 1 cycle of 10 min questions with a screen every 2 sec.
+		var numberOfSampes = numberOfScreens / 3 // Test for l, a and b in one direction each
+		var unidirSample = Math.ceil(Math.pow(numberOfSampes, 1/3))
+
+		// 2) We sample the RGB space regularly to improve homogeneity of the sampling
+		var setups = []
+		var r, g, b
+		for (r = Math.random() * 255/unidirSample; r<256; r += 255/unidirSample) {
+			for (g = Math.random() * 255/unidirSample; g<256; g += 255/unidirSample) {
+				for (b = Math.random() * 255/unidirSample; b<256; b += 255/unidirSample) {
+					['l', 'a', 'b'].forEach(function(chan){
+						var direction = Math.random() < 0.5 ? 1 : -1
+						var setup = {}
+						setup.baseColor = d3.rgb(r, g, b).toString()
+
+						var diffColor = d3.lab(setup.baseColor)
+						diffColor[chan] += direction * ns.settings.standardChanOffset
+						setup.diffColor = diffColor.toString()
+						if (setup.diffColor != setup.baseColor) {
+							setup.chan = chan
+							setup.chanDirection = direction
+							setup.chanOffset = ns.settings.standardChanOffset
+							setups.push(setup)
+						}
+					})
+				}
+			}
 		}
-		if (keySignature !== 'irrelevant') {
-			window.clearInterval(ns.colorInterval)
-			ns.keyAction(keySignature)
-		}
+
+		// 3) Finalize
+		ns.setups = ns.shuffle(setups)
 	}
 
-	ns.onAction = function(callback) {
-		ns.keyAction = callback
+	ns.newExperimentScreen = function(context) {
+		var setup = ns.setups.pop()
+		console.log(setup.chan)
+		ns.drawFrame(context)
+		var shapes = ns.generateShapes()	// shape 0 is always the special one
+		shapes.forEach(function(s,i) {
+			s.draw(context, setup.baseColor)
+		})
+		// shapes[0].draw(context, setup.diffColor)
+		ns.setColorTimer(shapes[0], setup.baseColor, setup.diffColor, ns.settings.screenDuration)
+
+		// Add more info to the setup
+		var k
+		for (k in ns.settings) {
+			setup['settings-'+k] = ns.settings[k]
+		}
+		setup.goal = shapes[0].position
+		var action = function(answer) {
+			setup.answer = answer
+			setup.duration = Date.now() - ns.timestamp
+			setup.time = Date.now()
+			setup.chosenColor = ns.currentColor
+			// console.log(setup)
+			ns.newExperimentScreen(context)
+		}
+		ns.onAction(action)
 	}
 
 	// Tutorial
@@ -187,7 +213,7 @@ var experiment = {}
 		ns.tutoSlides.push({
 			run: function(context) {
 				ns.drawFrame(context)
-				ns.drawMessage(context, 'You got it!\nHit the spacebar\nwhen you are ready\nto start.')
+				ns.drawMessage(context, 'Well done!\nReady to start?\nHit the spacebar')
 			}
 		})
 
@@ -195,7 +221,7 @@ var experiment = {}
 	ns.nextTutoSlide = function() {
 		ns.slideId++
 		if (ns.slideId >= ns.tutoSlides.length) {
-			// TODO: experiment
+			ns.startExperiment()
 		} else {
 			ns.tutoSlides[ns.slideId].run(ns.context)
 		}
@@ -204,6 +230,7 @@ var experiment = {}
 	// Color timer
 	ns.colorInterval
 	ns.timestamp
+	ns.currentColor
 	ns.setColorTimer = function(shape, sourceColor, targetColor, duration) {
 		ns.timestamp = Date.now()
 		var slab = d3.lab(sourceColor)
@@ -219,7 +246,11 @@ var experiment = {}
 			.range([slab.b, tlab.b])
 	 	ns.colorInterval = setInterval(function(){
 	 		var msPassed = Date.now() - ns.timestamp
-			shape.draw(ns.context, d3.lab(lscale(msPassed), ascale(msPassed), bscale(msPassed)).toString())
+	 		ns.currentColor = d3.lab(lscale(msPassed), ascale(msPassed), bscale(msPassed)).toString()
+			shape.draw(ns.context, ns.currentColor)
+			if (msPassed > duration) {
+				window.clearInterval(ns.colorInterval)
+			}
 		}, 40)
 	}
 
@@ -323,11 +354,83 @@ var experiment = {}
 		return shapes
 	}
 
+	// Key press functions
+	ns.keypressed = function(keynum) {
+		// console.log(keynum)
+		var keySignature
+		switch (keynum) {
+			case 38: // arrow up
+				keySignature = 'up'
+				break
+			case 40: // arrow down
+				keySignature = 'down'
+				break
+			case 37: // arrow left
+				keySignature = 'left'
+				break
+			case 39: // arrow right
+				keySignature = 'right'
+				break
+			case 32: // spacebar
+				keySignature = 'escape'
+				break
+			case 27: // escape key
+				keySignature = 'escape'
+				break
+			case 104: // keypad number 8
+				keySignature = 'up'
+				break
+			case 98: // keypad number 2
+				keySignature = 'down'
+				break
+			case 101: // keypad number 5
+				keySignature = 'down'
+				break
+			case 100: // keypad number 4
+				keySignature = 'left'
+				break
+			case 102: // keypad number 6
+				keySignature = 'right'
+				break
+			default:
+				keySignature = 'irrelevant'
+				break
+		}
+		if (keySignature !== 'irrelevant') {
+			window.clearInterval(ns.colorInterval)
+			ns.keyAction(keySignature)
+		}
+	}
+
+	ns.onAction = function(callback) {
+		ns.keyAction = callback
+	}
+
+
+
 	// Helpers
 	ns.randRange = function(from, to, integerOnly) {
 		var r = from + Math.random() * (to-from)
 		if (integerOnly) return Math.floor(r)
 		else return r
 	}
+	
+	ns.shuffle = function(array) {
+	  var currentIndex = array.length, temporaryValue, randomIndex;
 
+	  // While there remain elements to shuffle...
+	  while (0 !== currentIndex) {
+
+	    // Pick a remaining element...
+	    randomIndex = Math.floor(Math.random() * currentIndex);
+	    currentIndex -= 1;
+
+	    // And swap it with the current element.
+	    temporaryValue = array[currentIndex];
+	    array[currentIndex] = array[randomIndex];
+	    array[randomIndex] = temporaryValue;
+	  }
+
+	  return array;
+	}
 })(experiment)

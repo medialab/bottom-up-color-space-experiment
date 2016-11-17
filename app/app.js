@@ -125,27 +125,45 @@ var experiment = {}
 		// Log settings
 		setup.settings = ns.settings
 
-		// Goal
-		setup.g = shapes[0].position
-		
-		var action = function(answer) {
-			// Answer
-			setup.a = answer
+		setup.goal = shapes[0].position
 
+		var action = function(answer) {
+			var record = {}
+
+			// Goal
+			record.g = setup.goal
+
+			// Answer
+			record.a = answer
+			
 			// Duration
-			setup.d = Date.now() - ns.timestamp
+			record.d = Date.now() - ns.timestamp
 
 			// Time
-			setup.t = Date.now()
-
-			// Color
-			setup.c = ns.currentColor
+			record.t = Date.now()
 
 			// User
-			setup.u = ns.userid
+			record.u = ns.userid
 
-			// console.log(setup)
-			ns.sendRecord(setup)
+			// Base color
+			record.cB = setup.baseColor
+
+			// Color
+			record.c = ns.currentColor
+
+			// Diff color
+			record.cD = setup.diffColor
+
+			// Channel
+			record.ch = setup.chan
+			
+			// Channel direction
+			record.chD = setup.chanDirection
+			
+			// Channel offset
+			record.chO = setup.chanDirection
+						
+			ns.sendRecord(record)
 			ns.newExperimentScreen(context)
 		}
 		ns.onAction(action)

@@ -161,7 +161,7 @@ var experiment = {}
 			record.chD = setup.chanDirection
 			
 			// Channel offset
-			record.chO = setup.chanDirection
+			record.chO = setup.chanOffset
 						
 			ns.sendRecord(record)
 			ns.newExperimentScreen(context)

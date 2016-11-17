@@ -122,17 +122,28 @@ var experiment = {}
 		// shapes[0].draw(context, setup.diffColor)
 		ns.setColorTimer(shapes[0], setup.baseColor, setup.diffColor, ns.settings.screenDuration)
 
-		// Add more info to the setup
-		var k
-		for (k in ns.settings) {
-			setup['settings-'+k] = ns.settings[k]
-		}
-		setup.goal = shapes[0].position
+		// Log settings
+		setup.settings = ns.settings
+
+		// Goal
+		setup.g = shapes[0].position
+		
 		var action = function(answer) {
-			setup.answer = answer
-			setup.duration = Date.now() - ns.timestamp
-			setup.time = Date.now()
-			setup.chosenColor = ns.currentColor
+			// Answer
+			setup.a = answer
+
+			// Duration
+			setup.d = Date.now() - ns.timestamp
+
+			// Time
+			setup.t = Date.now()
+
+			// Color
+			setup.c = ns.currentColor
+
+			// User
+			setup.u = ns.userid
+
 			// console.log(setup)
 			ns.sendRecord(setup)
 			ns.newExperimentScreen(context)
@@ -411,12 +422,13 @@ var experiment = {}
 
 	// Rest API
 	ns.sendRecord = function(record) {
-		d3.request('http://127.0.0.1/gh/bottom-up-color-space-experiment/backend/api.php/records')
-			.mimeType("application/json")
+		var data = JSON.stringify( record )
+		d3.request('https://api.mlab.com/api/1/databases/colors-experiment/collections/records/?apiKey=zDcenEvluFNwtefM1-jsPTIee-JUk63m')
+			.header("Content-Type", "application/json")
+			.mimeType('application/json')
 	    .response(function(xhr) { return JSON.parse(xhr.responseText); })
-			// .send("POST", record, function(d){
-			.send("POST", '"gaga"', function(d){
-				console.log('POST', d)
+			.post(data, function(d){
+				// console.log('POST', d)
 			});
 	}
 

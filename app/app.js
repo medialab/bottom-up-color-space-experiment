@@ -134,6 +134,7 @@ var experiment = {}
 			setup.time = Date.now()
 			setup.chosenColor = ns.currentColor
 			// console.log(setup)
+			ns.sendRecord(setup)
 			ns.newExperimentScreen(context)
 		}
 		ns.onAction(action)
@@ -408,7 +409,16 @@ var experiment = {}
 		ns.keyAction = callback
 	}
 
-
+	// Rest API
+	ns.sendRecord = function(record) {
+		d3.request('http://127.0.0.1/gh/bottom-up-color-space-experiment/backend/api.php/records')
+			.mimeType("application/json")
+	    .response(function(xhr) { return JSON.parse(xhr.responseText); })
+			// .send("POST", record, function(d){
+			.send("POST", '"gaga"', function(d){
+				console.log('POST', d)
+			});
+	}
 
 	// Helpers
 	ns.randRange = function(from, to, integerOnly) {
